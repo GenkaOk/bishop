@@ -33,7 +33,7 @@ function populateRuleTable() {
             }
 
             //append the URL to the table
-            $('#rulesTableBody').append('<tr><td><input type="checkbox" id="ruleEnabled' + rule.uid + '"></td><td class="' + riskClass + '">' + riskText + '</td><td>' + rule.name + '</td><td>' + rule.description + '</td><td>' + rule.url + '</td><td>' + rule.searchString + '</td><td class="text-center"><a href="#" id="delRule' + rule.uid + '"><i class="glyphicon glyphicon-trash"></i></a></td></tr>');
+            $('#rulesTableBody').append('<tr><td><input type="checkbox" id="ruleEnabled' + rule.uid + '"></td><td class="' + riskClass + '">' + riskText + '</td><td>' + rule.name + '</td><td>' + rule.description + '</td><td>' + rule.url + '</td><td>' + rule.searchString + '</td><td class="text-center"><a href="#" id="delRule" data-id="' + rule.uid + '"><i class="glyphicon glyphicon-trash"></i></a></td></tr>');
         }
 
         //check or uncheck as appropriate
@@ -106,9 +106,11 @@ $("#saveRule").click(function () {
 });
 
 //hook the delete rule link (have to do this a bit funky since they're dynamically added)
-$(document.body).on("click", "[id^=delRule]", function () {
+$(document.body).on("click", "[id=delRule]", function (event) {
     //extract the UID from the element ID
-    var id = this.id.replace(/delRule/g, '');
+    // var id = this.id.replace(/delRule/g, '');
+    event.preventDefault();
+    var id = $(this).data('id');
 
     chrome.storage.sync.get(null, function (data) {
         rules = data.rules;
