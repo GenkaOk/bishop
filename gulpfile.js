@@ -1,113 +1,138 @@
-var gulp = require('gulp'),
-    minifyHtml = require('gulp-minify-html'),
-    minifyCss  = require('gulp-minify-css'),
-    concat     = require('gulp-concat'),
-    del        = require('del'),
-    uglify     = require('gulp-uglify'),
-    jshint     = require('gulp-jshint'),
-    stylish    = require('jshint-stylish'),
-    zip        = require('gulp-zip');
+var gulp        = require('gulp'),
+    series      = require('gulp').series,
+    minifyHtml  = require('gulp-minify-html'),
+    minifyCss   = require('gulp-minify-css'),
+    concat      = require('gulp-concat'),
+    del         = require('del'),
+    uglify      = require('gulp-uglify'),
+    jshint      = require('gulp-jshint'),
+    stylish     = require('jshint-stylish'),
+    zip         = require('gulp-zip'),
+    browsersync = require("browser-sync").create();
+
+function browserSyncReload (done) {
+    browsersync.reload();
+    done();
+}
 
 //lint it out
-gulp.task('hint', function () {
-    gulp.src(['./src/js/background/**/*', './src/js/content_script/**/*', './src/js/options/**/*', './src/js/popup/**/*'])
+function hint () {
+    return gulp.src(['./src/js/background/**/*', './src/js/content_script/**/*', './src/js/options/**/*', './src/js/popup/**/*'])
         .pipe(jshint())
         .pipe(jshint.reporter(stylish));
-});
+}
 
 //clear out the folder
-gulp.task('empty', function() {
+function empty () {
     del(['./dist/**', '!./dist', '!./dist/.gitignore', './bishop.zip']);
-});
+}
+
 
 // minify our html
-gulp.task('html', function () {
-    gulp.src('./src/html/*.html')
-    .pipe(minifyHtml())
-    .pipe(gulp.dest('./dist/'));
-});
+function html () {
+    return gulp.src('./src/html/*.html')
+        .pipe(minifyHtml())
+        .pipe(gulp.dest('./dist/'));
+}
 
 //minify & concat our CSS
-gulp.task('main-css', function () {
-    gulp.src('./src/css/*')
-    .pipe(minifyCss())
-    .pipe(concat('style.css'))
-    .pipe(gulp.dest('./dist/'));
-});
+function main_css () {
+    return gulp.src('./src/css/*')
+        .pipe(minifyCss())
+        .pipe(concat('style.css'))
+        .pipe(gulp.dest('./dist/'));
+}
 
-gulp.task('alert-css', function () {
-    gulp.src('./src/css/alert.css')
-    .pipe(minifyCss())
-    .pipe(concat('alert.css'))
-    .pipe(gulp.dest('./dist/'));
-});
+function alert_css () {
+    return gulp.src('./src/css/alert.css')
+        .pipe(minifyCss())
+        .pipe(concat('alert.css'))
+        .pipe(gulp.dest('./dist/'));
+}
 
 //minify and concat our js
 
 //background
-gulp.task('js-background', function () {
-    gulp.src('./src/js/background/*')
-    .pipe(uglify())
-    .pipe(concat('background.js'))
-    .pipe(gulp.dest('./dist/'));
-});
+function js_background () {
+    return gulp.src('./src/js/background/*')
+        .pipe(uglify())
+        .pipe(concat('background.js'))
+        .pipe(gulp.dest('./dist/'));
+}
 
 //content_script
-gulp.task('js-content', function () {
-    gulp.src('./src/js/content_script/*')
-    .pipe(uglify())
-    .pipe(concat('content_script.js'))
-    .pipe(gulp.dest('./dist/'));
-});
+function js_content () {
+    return gulp.src('./src/js/content_script/*')
+        .pipe(uglify())
+        .pipe(concat('content_script.js'))
+        .pipe(gulp.dest('./dist/'));
+}
 
 //popup
-gulp.task('js-popup', function () {
-    gulp.src('./src/js/popup/*')
-    .pipe(uglify())
-    .pipe(concat('popup.js'))
-    .pipe(gulp.dest('./dist/'));
-});
+function js_popup () {
+    return gulp.src('./src/js/popup/*')
+        .pipe(uglify())
+        .pipe(concat('popup.js'))
+        .pipe(gulp.dest('./dist/'));
+}
 
 //options
-gulp.task('js-options', function () {
-    gulp.src('./src/js/options/*')
-    .pipe(uglify())
-    .pipe(concat('options.js'))
-    .pipe(gulp.dest('./dist/'));
-});
+function js_options () {
+    return gulp.src('./src/js/options/*')
+        .pipe(uglify())
+        .pipe(concat('options.js'))
+        .pipe(gulp.dest('./dist/'));
+}
 
 //lib
-gulp.task('js-lib', function () {
-    gulp.src(['./src/js/lib/jquery-1.9.1.js', './src/js/lib/bootstrap.js', './src/js/lib/bootstrap-growl.min.js', './src/js/lib/intro.js'])
-    .pipe(uglify())
-    .pipe(concat('lib.js'))
-    .pipe(gulp.dest('./dist/'));
-});
+function js_lib () {
+    return gulp.src(['./src/js/lib/jquery-1.9.1.js', './src/js/lib/bootstrap.js', './src/js/lib/bootstrap-growl.min.js', './src/js/lib/intro.js'])
+        .pipe(uglify())
+        .pipe(concat('lib.js'))
+        .pipe(gulp.dest('./dist/'));
+}
 
 //move over remaining files
-gulp.task('copy', function () {
+function copy () {
     return gulp.src(['./src/audio/**/*', './src/img/**/*', './src/fonts/**/*', './src/manifest.json'], {
         base: 'src'
     }).pipe(gulp.dest('./dist'));
-});
+}
 
-gulp.task('zip', ['default'], function () {
+function zipProject () {
     return gulp.src('dist/**/*')
         .pipe(zip('bishop.zip'))
         .pipe(gulp.dest('./'));
-});
-
-//tie it all together
-gulp.task('js', ['js-background', 'js-content', 'js-popup', 'js-options', 'js-lib'])
-gulp.task('css', ['main-css', 'alert-css'])
+}
 
 //realtime watching
-gulp.task('realtime', function() {
-  gulp.watch('./src/js/**/*', ['js']);
-  gulp.watch('./src/html/**/*', ['html']);
-  gulp.watch('./src/css/**/*', ['css']);
-  gulp.watch(['./src/audio/**/*', './src/img/**/*', './src/fonts/**/*', './src/manifest.json'], ['copy']);
-});
+function realtime () {
+    gulp.watch('./src/js/**/*', js);
+    gulp.watch('./src/html/**/*', series(html, browserSyncReload));
+    gulp.watch('./src/css/**/*', css);
+    gulp.watch(['./src/audio/**/*', './src/img/**/*', './src/fonts/**/*', './src/manifest.json'], copy);
+}
 
-gulp.task('watch', ['realtime', 'html', 'css', 'js', 'copy']);
-gulp.task('default', ['hint', 'html', 'css', 'js', 'copy']);
+//tie it all together
+const js = series(js_background, js_content, js_popup, js_options, js_lib);
+const css = series(main_css, alert_css);
+
+
+exports.js_background = js_background;
+exports.js_content = js_content;
+exports.js_popup = js_popup;
+exports.js_options = js_options;
+exports.js_lib = js_lib;
+
+exports.zip = zipProject;
+
+exports.js = js;
+exports.css = css;
+
+exports.browsersync = browserSyncReload;
+
+exports.realtime = realtime;
+
+exports.watch = gulp.parallel(realtime, html, css, js, copy);
+exports.default = series(hint, html, css, js, copy);
+

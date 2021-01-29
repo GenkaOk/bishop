@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/jkingsman/bishop",
   "devDependencies": {
+    "browser-sync": "^2.26.14",
     "del": "^1.1.1",
     "gulp-concat": "^2.5.2",
     "gulp-jshint": "^1.9.4",
@@ -27,6 +28,6 @@
     "jshint-stylish": "^1.0.1"
   },
   "dependencies": {
-    "gulp": "^3.8.11"
+    "gulp": "^4.0.2"
   }
 }
