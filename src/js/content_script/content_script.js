@@ -1,7 +1,8 @@
 //make this a global since we're going to be accessing it a lot
 var rules, config, status;
 
-//I hate polluting global scope but this is the easiest way to handle different functions needing to know what timeout we're at
+//I hate polluting global scope but this is the easiest way to handle different functions needing to know what timeout
+// we're at
 var delay = 0;
 
 //the meat of the content script
@@ -17,29 +18,36 @@ chrome.storage.sync.get(null, function (data) {
 });
 
 //recurse through the directories and perform the scans
-function doScan(currentScanUrl, recursive) {
+function doScan (currentScanUrl, recursive) {
     var matchPattern = new RegExp(config.inclusionRegex);
     if (!matchPattern.test(currentScanUrl)) {
         return false;
     }
 
-    if (recursive) {
-        //keep processing URLs, including the current one and all parents, until we can't anymore
-        while (currentScanUrl != -1) {
-            //scan the URL with all our rules
-            scanURL(currentScanUrl);
-
-            //go to the next child url
-            currentScanUrl = nextParent(currentScanUrl);
+    chrome.storage.local.get('history', function (data) {
+        if (typeof data.history === 'undefined') {
+            data.history = [];
         }
-    } else {
-        //not recursing; just test the current location
-        scanURL(currentScanUrl);
-    }
+
+
+        if (recursive) {
+            //keep processing URLs, including the current one and all parents, until we can't anymore
+            while (currentScanUrl != -1) {
+                //scan the URL with all our rules
+                siteNeedScan(currentScanUrl, data.history) && scanURL(currentScanUrl);
+
+                //go to the next child url
+                currentScanUrl = nextParent(currentScanUrl);
+            }
+        } else {
+            //not recursing; just test the current location
+            siteNeedScan(currentScanUrl, data.history) && scanURL(currentScanUrl);
+        }
+    });
 }
 
 //scan a given URL with all of our rules
-function scanURL(url) {
+function scanURL (url) {
     for (var i = 0; i < rules.length; i++) {
         delay += (config.xhrDelay * 1000);
         var rule = rules[i];
@@ -50,16 +58,16 @@ function scanURL(url) {
              *
              *     setTimeout(function, delay, functionParam1, functionParam2, functionParam3, functionParam4, ...)
              */
-            setTimeout(upAndMatch, delay, url + "/" + rule.url, rule.searchString, rule.name);
+            setTimeout(upAndMatch, delay, url, url + "/" + rule.url, rule.searchString, rule.name);
         }
     }
 }
 
 //add a site onto the sites list and alert the user
-function addSiteAndAlert(url, rule) {
+function addSiteAndAlert (url, rule) {
     var sites;
     //pull our site list out of storage
-    chrome.storage.sync.get(null, function (data) {
+    chrome.storage.local.get(null, function (data) {
         sites = data.sites;
 
         //make sure we're not duplicating; get out if we are.
@@ -78,7 +86,7 @@ function addSiteAndAlert(url, rule) {
         });
 
         //send it to the great gig in the sky
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             'sites': sites
         });
 
@@ -90,8 +98,9 @@ function addSiteAndAlert(url, rule) {
 
         //handle JS alert
         if (config.alertFound) {
-            //the timeout is here due to some weird issue where, without a timeout, alert dismissal is required before the audio plays
-            //I'm guessing it's some issue with async processes getting blocked but who knows. this seems to fix it.
+            //the timeout is here due to some weird issue where, without a timeout, alert dismissal is required before
+            // the audio plays I'm guessing it's some issue with async processes getting blocked but who knows. this
+            // seems to fix it.
             setTimeout(function () {
                 alert('&#9821; Bishop matched your rule "' + rule + '" at ' + url);
             }, 500);
@@ -120,7 +129,7 @@ function addSiteAndAlert(url, rule) {
  * e.g. nextParent("http://exmaple.com/dir/file.html") returns "http://exmaple.com/dir".
  * e.g. nextParent("http://exmaple.com/") returns -1.
  */
-function nextParent(url) {
+function nextParent (url) {
     //sanitize so that the last occurence of the slash isn't a terminating slash
     stripTrailingSlash(url);
 
@@ -138,7 +147,7 @@ function nextParent(url) {
 
 //returns true if the url responds 200 and the responsebody matches the regex
 //use to just check for 200
-function upAndMatch(url, regex, ruleName) {
+function upAndMatch (originalUrl, url, regex, ruleName) {
     var req = new XMLHttpRequest();
     var pattern = new RegExp(regex);
 
@@ -154,15 +163,42 @@ function upAndMatch(url, regex, ruleName) {
         } else {
             console.error(req.statusText);
         }
+
+        saveSiteOnHistory(originalUrl);
     };
 
     req.send();
 }
 
-function stripTrailingSlash(url) {
+function stripTrailingSlash (url) {
     if (url.substr(-1) == '/') {
         return url.substr(0, url.length - 1);
     }
 
     return url;
+}
+
+function saveSiteOnHistory (url) {
+    chrome.storage.sync.get(null, function (dataSync) {
+        chrome.storage.local.get('history', function (data) {
+            if (typeof data.history === 'undefined') {
+                data.history = [];
+            }
+
+            if (!data.history.includes(url)) {
+                if (typeof dataSync.config.maxHistoryUrls !== 'undefined' &&
+                    dataSync.config.maxHistoryUrls &&
+                    data.history.length >= dataSync.config.maxHistoryUrls
+                ) {
+                    data.history = [];
+                }
+                data.history.push(url);
+                chrome.storage.local.set({history: data.history});
+            }
+        });
+    });
+}
+
+function siteNeedScan (url, history) {
+    return !history.includes(url);
 }

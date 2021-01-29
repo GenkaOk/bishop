@@ -149,6 +149,18 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="col-sm-2 control-label">Maximum count history</label>
+                    <div class="col-sm-3"><input id="maxHistoryUrls" class="input-sm" name="config"></div>
+                    <div class="col-sm-3">
+                        <button type="button" id="clearHistory" class="btn btn-danger">Clear history</button>
+                    </div>
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <span class="text-muted">Maximum saved history sites. This sites will not scanned</span><br/>
+                        <span class="text-muted">If history count reached maximum count - history will cleaned</span><br/>
+                        <span class="text-muted">Type "0" for unlimited history, current count: <span id="currentHistoryCount">0</span></span>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="col-sm-2 control-label">Sounds*</label>
                     <div class="col-sm-10">
                         <div class="checkbox">
@@ -188,6 +200,7 @@
                         <span class="text-muted">** leaving this empty will result in all sites being scanned. For example, if you want to exclude site1.com, site2.com, and all sites with the string 'etc' in the url, use ^(?:(?!site1\.com|site2\.com|etc).)*$</span>
                     </div>
                 </div>
+
             </form>
 
         </div>

@@ -2,7 +2,7 @@
 function populateSiteTable() {
     var site;
     $('#siteTableBody').empty();
-    chrome.storage.sync.get(null, function (data) {
+    chrome.storage.local.get(null, function (data) {
         //populate the table
         for (var i = parseInt(data.sites.length) - 1; i >= 0; i--) {
             site = data.sites[i];
@@ -22,7 +22,7 @@ function populateSiteTable() {
 $("#clearSites").click(function () {
     var confirmed = confirm("This will delete all stored sites.");
     if (confirmed) {
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             "sites": []
         }, function () {
             showNotification("success", "Site list cleared.");
@@ -33,7 +33,7 @@ $("#clearSites").click(function () {
 
 //pops up a modal with the JSON of the vulnerable sites in it
 $("#exportSites").click(function () {
-    chrome.storage.sync.get(null, function (data) {
+    chrome.storage.local.get(null, function (data) {
         var sites = data.sites;
         $("#exportBox").val(JSON.stringify(sites));
         $('#exportDataModal').modal('show');
@@ -47,12 +47,12 @@ $("#importSites").click(function () {
     var confirmed = confirm("This will import the current contents of the textarea; badly formed data will cause problems. Please reference the export format for the correct import format.");
     if (confirmed) {
         importData = jQuery.parseJSON($("#exportBox").val());
-        chrome.storage.sync.get(null, function (data) {
+        chrome.storage.local.get(null, function (data) {
             for (var i = 0; i < importData.length; i++) {
                 site = importData[i];
                 data.sites.push(site);
             }
-            chrome.storage.sync.set({
+            chrome.storage.local.set({
                 'sites': data.sites
             }, function () {
                 showNotification("success", "Sites loaded. You may need to deduplicate.");
@@ -65,7 +65,7 @@ $("#importSites").click(function () {
 
 //deduplicates site list
 $("#dedupSites").click(function () {
-    chrome.storage.sync.get(null, function (data) {
+    chrome.storage.local.get(null, function (data) {
         var sites = data.sites;
         var nonDups = [],
             isDup = 0,
@@ -91,7 +91,7 @@ $("#dedupSites").click(function () {
         }
 
         //send it to the great gig in the sky
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             'sites': nonDups
         }, function () {
             showNotification("success", "List deduplicated. You may need to refresh to see the changes.");
@@ -104,7 +104,7 @@ $(document.body).on("click", "[id^=delSite]", function () {
     //extract the UID from the element ID
     var id = this.id.replace(/delSite/g, '');
 
-    chrome.storage.sync.get(null, function (data) {
+    chrome.storage.local.get(null, function (data) {
         sites = data.sites;
 
         //loop through the ID's and find our ID
@@ -115,7 +115,7 @@ $(document.body).on("click", "[id^=delSite]", function () {
             }
         }
 
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             "sites": sites
         }, function () {
             showNotification("warning", "Site deleted.");
