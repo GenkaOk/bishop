@@ -8,15 +8,16 @@ chrome.storage.sync.get(null, function (data) {
             alertFound: false,
             alertCSSFound: true,
             xhrDelay: 5,
-            inclusionRegex: "examplesitename" 
+            inclusionRegex: "examplesitename",
+            maxHistoryUrls: 100,
+            searchMode: false
         };
 
         //only create a new sites if we don't have it yet; don't want to overwrite people's on update
-        if (typeof data.sites === "undefined") {
-            chrome.storage.sync.set({
-                "sites": [],
-            });
-        }
+        chrome.storage.local.set({
+            sites: [],
+            seenSites: 0
+        });
 
         //only create a new rules if we don't have it yet; don't want to overwrite people's on update
         if (typeof data.rules === "undefined") {
@@ -28,7 +29,6 @@ chrome.storage.sync.get(null, function (data) {
         //store the defaults
         chrome.storage.sync.set({
             "config": config,
-            "seenSites": 0,
             "status": 1,
         });
     }
@@ -37,7 +37,7 @@ chrome.storage.sync.get(null, function (data) {
 //handle our extension badge
 setInterval(function () {
     var newCount;
-    chrome.storage.sync.get(null, function (data) {
+    chrome.storage.local.get(null, function (data) {
         //compare the number of sites we saw last time we checked vs now. if greater; show a badge.
         newCount = data.sites.length - data.seenSites;
         if (newCount > 0) {
@@ -52,3 +52,23 @@ setInterval(function () {
         }
     });
 }, 2000);
+
+function openAllLinksOnPage () {
+
+}
+
+chrome.runtime.onMessage.addListener(
+    function (request, sender, sendResponse) {
+        if (typeof request.cmd !== 'undefined') {
+            if (request.cmd === 'closeAfterDone') {
+                if (!sender.tab.active) {
+                    chrome.tabs.remove(sender.tab.id);
+                }
+            } else if (request.cmd === 'openExternalLinks') {
+
+            }
+        }
+
+        sendResponse({});
+    }
+);

@@ -7,8 +7,8 @@ function buildPage () {
     chrome.storage.local.get(null, function (dataLocal) {
 
         chrome.storage.sync.get(null, function (data) {
-            chrome.storage.sync.set({
-                'seenSites': data.sites.length
+            chrome.storage.local.set({
+                seenSites: dataLocal.sites.length
             });
 
             config = data.config;
@@ -27,6 +27,7 @@ function buildPage () {
             $("#inclusionRegex").val(config.inclusionRegex);
 
             $('#maxHistoryUrls').val(config.maxHistoryUrls);
+            $('#searchMode').prop('checked', config.searchMode);
 
             if (typeof dataLocal.history !== 'undefined') {
                 $("#currentHistoryCount").html(dataLocal.history.length);
@@ -98,7 +99,8 @@ $("[name^=config]").on('change', function () {
 
         xhrDelay: $("#xhrDelay").val(),
         inclusionRegex: $("#inclusionRegex").val(),
-        maxHistoryUrls: parseInt($('#maxHistoryUrls').val())
+        maxHistoryUrls: parseInt($('#maxHistoryUrls').val()),
+        searchMode: $('#searchMode').prop('checked')
     };
 
     //store config

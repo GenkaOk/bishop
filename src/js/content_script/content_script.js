@@ -5,6 +5,8 @@ var rules, config, status;
 // we're at
 var delay = 0;
 
+var pageForScan = 0;
+
 //the meat of the content script
 chrome.storage.sync.get(null, function (data) {
     rules = data.rules;
@@ -29,7 +31,6 @@ function doScan (currentScanUrl, recursive) {
             data.history = [];
         }
 
-
         if (recursive) {
             //keep processing URLs, including the current one and all parents, until we can't anymore
             while (currentScanUrl != -1) {
@@ -42,6 +43,18 @@ function doScan (currentScanUrl, recursive) {
         } else {
             //not recursing; just test the current location
             siteNeedScan(currentScanUrl, data.history) && scanURL(currentScanUrl);
+        }
+
+        if (config.searchMode) {
+            var closeInterval = setInterval(function () {
+                console.log('page for scan: ' + pageForScan);
+                if (pageForScan <= 0) {
+                    console.log('close page');
+                    chrome.runtime.sendMessage({cmd: 'closeAfterDone'}, function (response) {
+                        clearInterval(closeInterval);
+                    });
+                }
+            }, 1000);
         }
     });
 }
@@ -59,6 +72,7 @@ function scanURL (url) {
              *     setTimeout(function, delay, functionParam1, functionParam2, functionParam3, functionParam4, ...)
              */
             setTimeout(upAndMatch, delay, url, url + "/" + rule.url, rule.searchString, rule.name);
+            pageForScan++;
         }
     }
 }
@@ -68,7 +82,7 @@ function addSiteAndAlert (url, rule) {
     var sites;
     //pull our site list out of storage
     chrome.storage.local.get(null, function (data) {
-        sites = data.sites;
+        sites = data.sites || [];
 
         //make sure we're not duplicating; get out if we are.
         for (var i = 0; i < sites.length; i++) {
@@ -92,8 +106,12 @@ function addSiteAndAlert (url, rule) {
 
         //handle audio alert
         if (config.soundFound) {
-            var audio = new Audio(chrome.extension.getURL('/audio/alert.mp3'));
-            audio.play();
+            try {
+                // @TODO: Fix audio
+                // var audio = new Audio(chrome.extension.getURL('/audio/alert.mp3'));
+                // audio.play();
+            } catch (e) {
+            }
         }
 
         //handle JS alert
@@ -153,6 +171,12 @@ function upAndMatch (originalUrl, url, regex, ruleName) {
 
     req.open('GET', url, true);
 
+    // After timeout aborted request
+    // Basic auth can be timeouted
+    var reqTimeout = setTimeout(function () {
+        req.abort();
+    }, 5000);
+
     req.onload = function () {
         if (req.readyState === 4) {
             if (req.status === 200) {
@@ -164,8 +188,25 @@ function upAndMatch (originalUrl, url, regex, ruleName) {
             console.error(req.statusText);
         }
 
+        clearTimeout(reqTimeout);
         saveSiteOnHistory(originalUrl);
+        pageForScan--;
     };
+
+    req.onabort = function () {
+        clearTimeout(reqTimeout);
+        pageForScan--;
+    }
+
+    req.ontimeout = function () {
+        clearTimeout(reqTimeout);
+        pageForScan--;
+    }
+
+    req.onerror = function () {
+        clearTimeout(reqTimeout);
+        pageForScan--;
+    }
 
     req.send();
 }

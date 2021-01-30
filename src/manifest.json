@@ -38,7 +38,8 @@
     "options_page": "options.html",
     "permissions": [
         "storage",
-        "unlimitedStorage"
+        "unlimitedStorage",
+        "tabs"
     ],
     "web_accessible_resources": [
         "audio/alert.mp3",
