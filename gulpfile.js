@@ -1,19 +1,15 @@
-var gulp        = require('gulp'),
-    series      = require('gulp').series,
-    minifyHtml  = require('gulp-minify-html'),
-    minifyCss   = require('gulp-minify-css'),
-    concat      = require('gulp-concat'),
-    del         = require('del'),
-    uglify      = require('gulp-uglify'),
-    jshint      = require('gulp-jshint'),
-    stylish     = require('jshint-stylish'),
-    zip         = require('gulp-zip'),
-    browsersync = require("browser-sync").create();
+var gulp       = require('gulp'),
+    series     = require('gulp').series,
+    parallel   = require('gulp').parallel,
+    minifyHtml = require('gulp-minify-html'),
+    minifyCss  = require('gulp-minify-css'),
+    concat     = require('gulp-concat'),
+    del        = require('del'),
+    uglify     = require('gulp-uglify'),
+    jshint     = require('gulp-jshint'),
+    stylish    = require('jshint-stylish'),
+    zip        = require('gulp-zip');
 
-function browserSyncReload (done) {
-    browsersync.reload();
-    done();
-}
 
 //lint it out
 function hint () {
@@ -85,9 +81,23 @@ function js_options () {
 }
 
 //lib
+function css_lib () {
+    return gulp.src([
+            './node_modules/bootstrap/dist/css/bootstrap.min.css',
+            './node_modules/intro.js/introjs.css',
+            './src/css/bootsrap-growl.css',
+        ])
+        .pipe(concat('lib.css'))
+        .pipe(gulp.dest('./dist/'));
+}
+
 function js_lib () {
-    return gulp.src(['./src/js/lib/jquery-1.9.1.js', './src/js/lib/bootstrap.js', './src/js/lib/bootstrap-growl.min.js', './src/js/lib/intro.js'])
-        .pipe(uglify())
+    return gulp.src([
+            './node_modules/jquery/dist/jquery.min.js',
+            './node_modules/bootstrap/dist/js/bootstrap.min.js',
+            './node_modules/bootstrap-notify/bootstrap-notify.min.js',
+            './node_modules/intro.js/minified/intro.min.js'
+        ])
         .pipe(concat('lib.js'))
         .pipe(gulp.dest('./dist/'));
 }
@@ -108,14 +118,14 @@ function zipProject () {
 //realtime watching
 function realtime () {
     gulp.watch('./src/js/**/*', js);
-    gulp.watch('./src/html/**/*', series(html, browserSyncReload));
+    gulp.watch('./src/html/**/*', html);
     gulp.watch('./src/css/**/*', css);
     gulp.watch(['./src/audio/**/*', './src/img/**/*', './src/fonts/**/*', './src/manifest.json'], copy);
 }
 
 //tie it all together
-const js = series(js_background, js_content, js_popup, js_options, js_lib);
-const css = series(main_css, alert_css);
+const js = parallel(js_background, js_content, js_popup, js_options, js_lib);
+const css = series(css_lib,);
 
 
 exports.js_background = js_background;
@@ -124,12 +134,12 @@ exports.js_popup = js_popup;
 exports.js_options = js_options;
 exports.js_lib = js_lib;
 
+exports.css_lib = css_lib;
+
 exports.zip = zipProject;
 
 exports.js = js;
 exports.css = css;
-
-exports.browsersync = browserSyncReload;
 
 exports.realtime = realtime;
 
