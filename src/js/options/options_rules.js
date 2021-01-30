@@ -56,6 +56,7 @@ $("#deleteAllRules").click(function () {
         chrome.storage.sync.set({
             "rules": []
         }, function () {
+            populateRuleTable();
             showNotification("success", "Rule list cleared.");
         });
     }
@@ -98,6 +99,7 @@ $("#saveRule").click(function () {
         chrome.storage.sync.set({
             'rules': rules
         }, function () {
+            populateRuleTable();
             $('#addRuleModal').modal('hide');
             showNotification("success", "Rule added.");
             $("#addRuleForm")[0].reset();
@@ -179,6 +181,7 @@ $("#importRule").click(function () {
             chrome.storage.sync.set({
                 'rules': data.rules
             }, function () {
+                populateRuleTable();
                 showNotification("success", "Rules loaded.");
                 $('#exportRuleModal').modal('hide');
             });
