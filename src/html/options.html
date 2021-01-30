@@ -149,23 +149,79 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-sm-2 control-label">Maximum count history</label>
-                    <div class="col-sm-3"><input id="maxHistoryUrls" class="input-sm" name="config"></div>
+                    <label class="col-sm-2 control-label">Enable history scan</label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <input id="enableHistory" type="checkbox" name="config">
+                                Enable save all scanned sites to history
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="maxHistoryUrlsBlock">
+                    <label class="col-sm-2 control-label">Max history count sites</label>
                     <div class="col-sm-3">
+                        <input id="maxHistoryUrls" class="input-sm" name="config">
                         <button type="button" id="clearHistory" class="btn btn-danger">Clear history</button>
                     </div>
                     <div class="col-sm-offset-2 col-sm-10">
-                        <span class="text-muted">Maximum saved history sites. This sites will not scanned</span><br/>
+                        <span class="text-muted">Maximum saved history sites. This sites will not scanned retry</span><br/>
                         <span class="text-muted">If history count reached maximum count - history will cleaned</span><br/>
-                        <span class="text-muted">Type "0" for unlimited history, current count: <span id="currentHistoryCount">0</span></span>
+                        <span class="text-muted">Type "0" for unlimited history, current count: <strong
+                                id="currentHistoryCount">0</strong></span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-sm-2 control-label">Enable search mode</label>
-                    <div class="col-sm-3"><input id="searchMode" type="checkbox" class="checkbox" name="config"></div>
+                    <label class="col-sm-2 control-label">Search mode</label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <input id="searchMode" type="checkbox" name="config"> Enable search
+                                mode
+                            </label>
+                        </div>
+                    </div>
                     <div class="col-sm-offset-2 col-sm-10">
-                        <span class="text-muted">In search mode all new tabs must closed after scanned</span><br/>
+                        <span class="text-muted">In search mode all new tabs will be closed after being scanned</span><br/>
+                        <span class="text-muted">Enable this mode if you have enough sites for scanning</span><br/>
+                        <span class="text-muted">Active tab doesn't close.</span><br/>
+                        <span class="text-muted">We recommend to open new tabs with <i>Ctrl + Click</i> or <i>Cmd + Click</i> on Mac</span><br/>
+                        <br>
+                        <span class="text-danger">This feature in beta-testing</span><br/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Smart search</label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <input id="smartSearch" type="checkbox" name="config">
+                                Enable smart search
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <span class="text-muted">Smart search checked file robots.txt and index page on static directories and scans them.</span><br/>
                         <span class="text-muted">Enable this mode if you have enough count sites for scanning</span><br/>
+                        <br>
+                        <span class="text-danger">We recommend to use this options only with enabled `History scan` option</span><br/>
+                        <span class="text-danger">This feature in beta-testing</span><br/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Basic auth</label>
+                    <div class="col-sm-10">
+                        <input id="basicAuthLogin" class="input-sm" name="config" placeholder="Login">
+                        :
+                        <input id="basicAuthPassword" class="input-sm" name="config" placeholder="Password">
+                    </div>
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <span class="text-muted">If you need use basic-auth or ignore basic-auth urls - use this fields</span><br/>
+                        <span class="text-muted">For skip basic-auth need type anything login and password</span><br/>
+                        <span class="text-info">Keep empty login and password, unless you don't want use this feature</span><br/>
+                        <br>
+                        <span class="text-danger">This feature in beta-testing</span><br/>
                     </div>
                 </div>
                 <div class="form-group">
@@ -181,7 +237,8 @@
                     <label class="col-sm-2 control-label">Alerts*</label>
                     <div class="col-sm-10">
                         <div class="checkbox">
-                            <label><input type="checkbox" id="alertFound" name="config"> Show JS alert when a match is
+                            <label><input type="checkbox" id="alertFound" name="config"> Show JS alert when a match
+                                is
                                 found (page blocking; <a href="#" id="demoAlert">demo alert</a>)</label>
                         </div>
                     </div>
@@ -189,20 +246,32 @@
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
                         <div class="checkbox">
-                            <label><input type="checkbox" id="alertCSSFound" name="config"> Show in-page CSS alert at
+                            <label><input type="checkbox" id="alertCSSFound" name="config"> Show in-page CSS alert
+                                at
                                 the top of the page when a match is found (non-page blocking; <a href="#"
                                                                                                  id="demoCSSAlert">demo
                                     alert</a>)</label>
                         </div>
                     </div>
                 </div>
-                <div class="form-group" id="includeBox">
-                    <label class="col-sm-2 control-label">Sites to Scan**</label>
-                    <div class="col-sm-10">The host will only be scanned if the regular expression in this box matches
-                        against the URL <input id="inclusionRegex" name="config"></p>
+
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Filter sites</label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <input id="enableFilterSiteByRegex" type="checkbox" name="config">
+                                Enable filter scan sites by regex
+                            </label>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="inclusionRegexBlock">
+                    <label class="col-sm-2 control-label">Sites to Scan**</label>
+                    <div class="col-sm-10">The host will only be scanned if the regular expression in this box
+                        matches
+                        against the URL <input id="inclusionRegex" name="config"></p>
+                    </div>
                     <div class="col-sm-offset-2 col-sm-10">
                         <span class="text-muted">* the extension icon will display the number of new matches discovered since the last visit to the options page regardless of the Sounds and Alerts configuration</span><br/>
                         <span class="text-muted">** leaving this empty will result in all sites being scanned. For example, if you want to exclude site1.com, site2.com, and all sites with the string 'etc' in the url, use ^(?:(?!site1\.com|site2\.com|etc).)*$</span>

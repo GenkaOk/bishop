@@ -24,10 +24,18 @@ function buildPage () {
             $("#alertCSSFound").prop("checked", config.alertCSSFound);
 
             $("#xhrDelay").val(config.xhrDelay);
+
+            $("#enableFilterSiteByRegex").prop("checked", config.enableFilterSiteByRegex);
             $("#inclusionRegex").val(config.inclusionRegex);
 
+            $('#enableHistory').prop('checked', config.enableHistory);
             $('#maxHistoryUrls').val(config.maxHistoryUrls);
+
             $('#searchMode').prop('checked', config.searchMode);
+            $('#smartSearch').prop('checked', config.smartSearch);
+
+            $('#basicAuthLogin').val(config.basicAuthLogin);
+            $('#basicAuthPassword').val(config.basicAuthPassword);
 
             if (typeof dataLocal.history !== 'undefined') {
                 $("#currentHistoryCount").html(dataLocal.history.length);
@@ -39,6 +47,7 @@ function buildPage () {
                 populateSiteTable();
             }, 500);
 
+            updatePage();
 
             //be loud if it's disabled
             if (!enabled) {
@@ -64,6 +73,24 @@ function buildPage () {
     });
 }
 
+function updatePage () {
+    chrome.storage.sync.get(null, function (data) {
+        var config = data.config;
+
+        toggleBlockFromConfig('#inclusionRegexBlock', config.enableFilterSiteByRegex);
+
+        toggleBlockFromConfig('#maxHistoryUrlsBlock', config.enableHistory);
+    });
+}
+
+function toggleBlockFromConfig (blockId, param) {
+    if (param) {
+        $(blockId).slideDown();
+    } else {
+        $(blockId).slideUp();
+    }
+}
+
 //show notifications
 //style is a bootstrap alert class sans the 'alert-'
 //content is the message to display
@@ -75,7 +102,7 @@ function showNotification (notifyType, notifyContent) {
         },
         {
             type: 'minimalist',
-            delay: 5000,
+            delay: 1000,
             template: '<div data-notify="container" class="col-xs-11 col-sm-2 alert alert-' + notifyType + ' alert-{0}" role="alert">' +
                 '<span data-notify="title">{1}</span>' +
                 '<span data-notify="message">{2}</span>' +
@@ -98,9 +125,18 @@ $("[name^=config]").on('change', function () {
         alertCSSFound: $("#alertCSSFound").prop("checked"),
 
         xhrDelay: $("#xhrDelay").val(),
+
+        enableFilterSiteByRegex: $("#enableFilterSiteByRegex").prop("checked"),
         inclusionRegex: $("#inclusionRegex").val(),
+
+        enableHistory: $('#enableHistory').prop('checked'),
         maxHistoryUrls: parseInt($('#maxHistoryUrls').val()),
-        searchMode: $('#searchMode').prop('checked')
+
+        searchMode: $('#searchMode').prop('checked'),
+        smartSearch: $('#smartSearch').prop('checked'),
+
+        basicAuthLogin: $('#basicAuthLogin').val(),
+        basicAuthPassword: $('#basicAuthPassword').val()
     };
 
     //store config
@@ -142,6 +178,7 @@ $('#clearHistory').click(function () {
 
 //get live updates when something changes
 chrome.storage.onChanged.addListener(function (changes, namespace) {
-    populateRuleTable();
+    // populateRuleTable();
     populateSiteTable();
+    updatePage();
 });

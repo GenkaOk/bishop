@@ -8,9 +8,19 @@ chrome.storage.sync.get(null, function (data) {
             alertFound: false,
             alertCSSFound: true,
             xhrDelay: 5,
+
+            enableFilterSiteByRegex: true,
             inclusionRegex: "examplesitename",
-            maxHistoryUrls: 100,
-            searchMode: false
+
+            enableHistory: true,
+            maxHistoryUrls: 1000,
+
+            searchMode: false,
+
+            smartSearch: true,
+
+            basicAuthLogin: null,
+            basicAuthPassword: null,
         };
 
         //only create a new sites if we don't have it yet; don't want to overwrite people's on update

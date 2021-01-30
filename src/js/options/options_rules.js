@@ -1,6 +1,6 @@
-function populateRuleTable() {
+function populateRuleTable () {
     var rule, riskClass, riskText;
-    var totalCount = 0,
+    var totalCount  = 0,
         activeCount = 0;
 
     $('#rulesTableBody').empty();
@@ -62,7 +62,7 @@ $("#deleteAllRules").click(function () {
 });
 
 //iterates through all checkbox
-function handleCheckboxes(rules) {
+function handleCheckboxes (rules) {
     //loop through and check
     for (var i = 0; i < rules.length; i++) {
         var rule = rules[i];
@@ -110,7 +110,8 @@ $(document.body).on("click", "[id=delRule]", function (event) {
     //extract the UID from the element ID
     // var id = this.id.replace(/delRule/g, '');
     event.preventDefault();
-    var id = $(this).data('id');
+    var id  = $(this).data('id'),
+        $tr = $(this).closest('tr');
 
     chrome.storage.sync.get(null, function (data) {
         rules = data.rules;
@@ -118,7 +119,7 @@ $(document.body).on("click", "[id=delRule]", function (event) {
         //loop through the ID's and find our ID
         for (var i = 0; i < rules.length; i++) {
             var rule = rules[i];
-            if (rule.uid == id) {
+            if (rule.uid === id) {
                 rules.splice(i, 1);
             }
         }
@@ -126,6 +127,7 @@ $(document.body).on("click", "[id=delRule]", function (event) {
         chrome.storage.sync.set({
             "rules": rules
         }, function () {
+            $tr.remove();
             showNotification("warning", "Rule deleted.");
         });
     });
@@ -233,7 +235,7 @@ $(document.body).on("click", "[id^=bulkEnable]", function () {
             showNotification("success", "Rule status changed.");
         });
     });
-    
+
     return false;
 });
 
@@ -285,6 +287,6 @@ $(document.body).on("click", "[id^=bulkDisable]", function () {
             showNotification("success", "Rule status changed.");
         });
     });
-    
+
     return false;
 });

@@ -7,11 +7,15 @@ function init_main () {
             }
             //make the switch reflect our current state
             if (data.status) {
-                $("#status").html('<span class="bg-success">Enabled<br>' + dataLocal.history.length + ' urls scanned</span>');
+                $("#status").html('<span class="bg-success">Enabled</span>');
             } else if (data.config.enableQueue) {
                 $("#status").html('<span class="bg-warning">Queueing</span>');
             } else {
                 $("#status").html('<span class="bg-danger">Disabled</span>');
+            }
+
+            if (dataLocal.history) {
+                $('#historyCount').html(dataLocal.history.length + ' urls scanned');
             }
 
             $('#enableSearchMode')

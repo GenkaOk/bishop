@@ -15,15 +15,17 @@ chrome.storage.sync.get(null, function (data) {
 
     if (data.status && typeof isCSEmbedded === "undefined") { // lets us define a variable so we can include this in options without running a sweep, but we still get the functions
         //we're enabled and not being used as a library; pull the trigger
-        doScan(stripTrailingSlash(window.location.href), config.recursive);
+        doScan(stripTrailingSlash(window.location.href), config.recursive, true);
     }
 });
 
 //recurse through the directories and perform the scans
-function doScan (currentScanUrl, recursive) {
-    var matchPattern = new RegExp(config.inclusionRegex);
-    if (!matchPattern.test(currentScanUrl)) {
-        return false;
+function doScan (currentScanUrl, recursive, needSmartSearch) {
+    if (config.enableFilterSiteByRegex) {
+        var matchPattern = new RegExp(config.inclusionRegex);
+        if (!matchPattern.test(currentScanUrl)) {
+            return false;
+        }
     }
 
     chrome.storage.local.get('history', function (data) {
@@ -32,13 +34,29 @@ function doScan (currentScanUrl, recursive) {
         }
 
         if (recursive) {
+            var lastUrl;
             //keep processing URLs, including the current one and all parents, until we can't anymore
-            while (currentScanUrl != -1) {
+            while (currentScanUrl !== -1) {
                 //scan the URL with all our rules
                 siteNeedScan(currentScanUrl, data.history) && scanURL(currentScanUrl);
 
                 //go to the next child url
                 currentScanUrl = nextParent(currentScanUrl);
+
+                if (currentScanUrl !== -1) {
+                    lastUrl = currentScanUrl;
+                }
+            }
+
+            // Smart search work only for last page
+            // test.com/abc/ - don't work
+            // test.com/ - work
+            if (config.smartSearch && needSmartSearch) {
+                var urlSmartSearch = lastUrl + '---@smart_search';
+                siteNeedScan(urlSmartSearch, data.history) && smartSearch(lastUrl);
+
+                // Smart search run only once
+                config.enableHistory && saveSiteOnHistory(urlSmartSearch);
             }
         } else {
             //not recursing; just test the current location
@@ -47,10 +65,8 @@ function doScan (currentScanUrl, recursive) {
 
         if (config.searchMode) {
             var closeInterval = setInterval(function () {
-                console.log('page for scan: ' + pageForScan);
                 if (pageForScan <= 0) {
-                    console.log('close page');
-                    chrome.runtime.sendMessage({cmd: 'closeAfterDone'}, function (response) {
+                    chrome.runtime.sendMessage({cmd: 'closeAfterDone'}, function () {
                         clearInterval(closeInterval);
                     });
                 }
@@ -87,7 +103,7 @@ function addSiteAndAlert (url, rule) {
         //make sure we're not duplicating; get out if we are.
         for (var i = 0; i < sites.length; i++) {
             var site = sites[i];
-            if (site.url == url && site.rule == rule) {
+            if (site.url === url && site.rule === rule) {
                 return;
             }
         }
@@ -169,13 +185,7 @@ function upAndMatch (originalUrl, url, regex, ruleName) {
     var req = new XMLHttpRequest();
     var pattern = new RegExp(regex);
 
-    req.open('GET', url, true);
-
-    // After timeout aborted request
-    // Basic auth can be timeouted
-    var reqTimeout = setTimeout(function () {
-        req.abort();
-    }, 5000);
+    req.open('GET', url, true, config.basicAuthLogin || null, config.basicAuthPassword || null);
 
     req.onload = function () {
         if (req.readyState === 4) {
@@ -188,23 +198,19 @@ function upAndMatch (originalUrl, url, regex, ruleName) {
             console.error(req.statusText);
         }
 
-        clearTimeout(reqTimeout);
-        saveSiteOnHistory(originalUrl);
+        config.enableHistory && saveSiteOnHistory(originalUrl);
         pageForScan--;
     };
 
     req.onabort = function () {
-        clearTimeout(reqTimeout);
         pageForScan--;
     }
 
     req.ontimeout = function () {
-        clearTimeout(reqTimeout);
         pageForScan--;
     }
 
     req.onerror = function () {
-        clearTimeout(reqTimeout);
         pageForScan--;
     }
 
@@ -212,7 +218,7 @@ function upAndMatch (originalUrl, url, regex, ruleName) {
 }
 
 function stripTrailingSlash (url) {
-    if (url.substr(-1) == '/') {
+    if (url.substr(-1) === '/') {
         return url.substr(0, url.length - 1);
     }
 
@@ -241,5 +247,102 @@ function saveSiteOnHistory (url) {
 }
 
 function siteNeedScan (url, history) {
+    if (!config.enableHistory) {
+        return true;
+    }
+
     return !history.includes(url);
+}
+
+function smartSearch (url) {
+    if (pageForScan > 0) {
+        console.log('smart scan wait 1 second...');
+        return setTimeout(smartSearch, 1000, url);
+    }
+
+    console.log('start scan');
+
+    var shortHistory = [];
+    chrome.storage.local.get('history', function (data) {
+        pageForScan++;
+        getUrl(url + '/robots.txt')
+            .then(function (response) {
+                var allMatchDirs = Array.from(response.responseText.matchAll(/Disallow: (\/[a-zA-Z\/]+?\/)$/gm)) || [];
+
+                for (var index in allMatchDirs) {
+                    console.log(url + allMatchDirs[index][1]);
+                    var resultUrl = url + allMatchDirs[index][1];
+
+                    if (shortHistory.includes(resultUrl)) {
+                        continue;
+                    }
+
+                    siteNeedScan(resultUrl, data.history) && doScan(stripTrailingSlash(resultUrl), false, false);
+                    shortHistory.push(resultUrl);
+                }
+                pageForScan--;
+                console.log('end scan');
+            })
+            .catch(function (error) {
+                console.log('robots.txt was error:', error);
+                pageForScan--;
+            });
+
+        pageForScan++;
+        getUrl(url)
+            .then(function (response) {
+                var allMatchDirs = Array.from(response.responseText.matchAll(/["'](\/[a-zA-Z\/]+?\/[a-zA-Z\/]+?\.[a-zA-Z]{2,6}?)\??["']/gm)) || [];
+
+                for (var index in allMatchDirs) {
+                    var arrayPath = allMatchDirs[index][1].split('/');
+                    arrayPath.pop();
+
+                    var resultUrl = url + arrayPath.join('/');
+
+                    if (shortHistory.includes(resultUrl)) {
+                        continue;
+                    }
+
+                    siteNeedScan(resultUrl, data.history) && doScan(stripTrailingSlash(resultUrl), false, false);
+                    shortHistory.push(resultUrl);
+                }
+                pageForScan--;
+                console.log('end scan');
+            })
+            .catch(function (error) {
+                console.log('static directories was error:', error);
+                pageForScan--;
+            });
+    });
+}
+
+function getUrl (url) {
+    return new Promise(function (resolve, reject) {
+        var req = new XMLHttpRequest();
+        req.open('GET', url, true, config.basicAuthLogin || null, config.basicAuthPassword || null);
+
+        req.onload = function () {
+            if (req.readyState === 4) {
+                if (req.status === 200) {
+                    resolve(req);
+                }
+            } else {
+                reject(req.statusText);
+            }
+        };
+
+        req.onabort = function () {
+            reject('Abort');
+        }
+
+        req.ontimeout = function () {
+            reject('Timeout');
+        }
+
+        req.onerror = function () {
+            reject('Error');
+        }
+
+        req.send();
+    });
 }
