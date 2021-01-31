@@ -19,8 +19,10 @@ function hint () {
 }
 
 //clear out the folder
-function empty () {
-    del(['./dist/**', '!./dist', '!./dist/.gitignore', './bishop.zip']);
+function empty (cb) {
+    return del(['./dist/**', '!./dist', '!./dist/.gitignore', './bishop.zip']).then(() => {
+        cb()
+    });
 }
 
 
@@ -138,8 +140,12 @@ exports.css_lib = css_lib;
 
 exports.zip = zipProject;
 
+exports.empty = empty;
+
 exports.js = js;
 exports.css = css;
+
+exports.hint = hint;
 
 exports.realtime = realtime;
 

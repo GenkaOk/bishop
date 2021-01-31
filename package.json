@@ -8,16 +8,16 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/jkingsman/bishop.git"
+        "url": "https://github.com/GenkaOk/bishop"
     },
     "author": "Jack Kingsman <jack.kingsman@gmail.com>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/jkingsman/bishop/issues"
+        "url": "https://github.com/GenkaOk/bishop/issues"
     },
-    "homepage": "https://github.com/jkingsman/bishop",
+    "homepage": "https://github.com/GenkaOk/bishop",
     "devDependencies": {
-        "del": "^1.1.1",
+        "del": "^6.0.0",
         "gulp": "^4.0.2",
         "gulp-concat": "^2.5.2",
         "gulp-jshint": "^1.9.4",

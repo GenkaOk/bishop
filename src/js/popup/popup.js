@@ -32,7 +32,7 @@ function init_main () {
 
             $('#openExternalLinks').click(function () {
                 chrome.runtime.sendMessage({cmd: 'openExternalLinks'});
-            })
+            });
 
             //show the menu
             $('html').hide().fadeIn('slow');

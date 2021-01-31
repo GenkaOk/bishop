@@ -38,7 +38,9 @@ function doScan (currentScanUrl, recursive, needSmartSearch) {
             //keep processing URLs, including the current one and all parents, until we can't anymore
             while (currentScanUrl !== -1) {
                 //scan the URL with all our rules
-                siteNeedScan(currentScanUrl, data.history) && scanURL(currentScanUrl);
+                if (siteNeedScan(currentScanUrl, data.history)) {
+                    scanURL(currentScanUrl);
+                }
 
                 //go to the next child url
                 currentScanUrl = nextParent(currentScanUrl);
@@ -53,14 +55,20 @@ function doScan (currentScanUrl, recursive, needSmartSearch) {
             // test.com/ - work
             if (config.smartSearch && needSmartSearch) {
                 var urlSmartSearch = lastUrl + '---@smart_search';
-                siteNeedScan(urlSmartSearch, data.history) && smartSearch(lastUrl);
+                if (siteNeedScan(urlSmartSearch, data.history)) {
+                    smartSearch(lastUrl);
+                }
 
                 // Smart search run only once
-                config.enableHistory && saveSiteOnHistory(urlSmartSearch);
+                if (config.enableHistory) {
+                    saveSiteOnHistory(urlSmartSearch);
+                }
             }
         } else {
             //not recursing; just test the current location
-            siteNeedScan(currentScanUrl, data.history) && scanURL(currentScanUrl);
+            if (siteNeedScan(currentScanUrl, data.history)) {
+                scanURL(currentScanUrl);
+            }
         }
 
         if (config.searchMode) {
@@ -198,21 +206,23 @@ function upAndMatch (originalUrl, url, regex, ruleName) {
             console.error(req.statusText);
         }
 
-        config.enableHistory && saveSiteOnHistory(originalUrl);
+        if (config.enableHistory) {
+            saveSiteOnHistory(originalUrl);
+        }
         pageForScan--;
     };
 
     req.onabort = function () {
         pageForScan--;
-    }
+    };
 
     req.ontimeout = function () {
         pageForScan--;
-    }
+    };
 
     req.onerror = function () {
         pageForScan--;
-    }
+    };
 
     req.send();
 }
@@ -256,11 +266,8 @@ function siteNeedScan (url, history) {
 
 function smartSearch (url) {
     if (pageForScan > 0) {
-        console.log('smart scan wait 1 second...');
         return setTimeout(smartSearch, 1000, url);
     }
-
-    console.log('start scan');
 
     var shortHistory = [];
     chrome.storage.local.get('history', function (data) {
@@ -270,21 +277,21 @@ function smartSearch (url) {
                 var allMatchDirs = Array.from(response.responseText.matchAll(/Disallow: (\/[a-zA-Z\/]+?\/)$/gm)) || [];
 
                 for (var index in allMatchDirs) {
-                    console.log(url + allMatchDirs[index][1]);
                     var resultUrl = url + allMatchDirs[index][1];
 
                     if (shortHistory.includes(resultUrl)) {
                         continue;
                     }
 
-                    siteNeedScan(resultUrl, data.history) && doScan(stripTrailingSlash(resultUrl), false, false);
+                    if (siteNeedScan(resultUrl, data.history)) {
+                        doScan(stripTrailingSlash(resultUrl), false, false);
+                    }
                     shortHistory.push(resultUrl);
                 }
                 pageForScan--;
-                console.log('end scan');
             })
             .catch(function (error) {
-                console.log('robots.txt was error:', error);
+                console.error('robots.txt was error:', error);
                 pageForScan--;
             });
 
@@ -303,14 +310,15 @@ function smartSearch (url) {
                         continue;
                     }
 
-                    siteNeedScan(resultUrl, data.history) && doScan(stripTrailingSlash(resultUrl), false, false);
+                    if (siteNeedScan(resultUrl, data.history)) {
+                        doScan(stripTrailingSlash(resultUrl), false, false);
+                    }
                     shortHistory.push(resultUrl);
                 }
                 pageForScan--;
-                console.log('end scan');
             })
             .catch(function (error) {
-                console.log('static directories was error:', error);
+                console.error('static directories was error:', error);
                 pageForScan--;
             });
     });
@@ -333,15 +341,15 @@ function getUrl (url) {
 
         req.onabort = function () {
             reject('Abort');
-        }
+        };
 
         req.ontimeout = function () {
             reject('Timeout');
-        }
+        };
 
         req.onerror = function () {
             reject('Error');
-        }
+        };
 
         req.send();
     });

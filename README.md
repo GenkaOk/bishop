@@ -7,7 +7,7 @@ Bishop comes with a set of rules that hunt for the lowest hanging fruit, but the
 
 Bishop is intended SOLELY for legal use on web servers that you control or are permitted to scan, and the developers are not responsible for how you choose to use this software. Be safe and legal with this tool. 
 
-Bishop is MIT licensed and open source; contribute at https://github.com/jkingsman/bishop.
+Bishop is MIT licensed and open source; contribute at https://github.com/GenkaOk/bishop.
 
 ## Installation
 
@@ -15,8 +15,6 @@ Bishop is MIT licensed and open source; contribute at https://github.com/jkingsm
 
 ### Automatic
 Download from the [Chrome Web Store](https://chrome.google.com/webstore/detail/cbkdeoaaclnbidadjimofnhpbfhjakoe).
-
-[![Image of Chrome Store Badge](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_340x96.png)](https://chrome.google.com/webstore/detail/cbkdeoaaclnbidadjimofnhpbfhjakoe)
 
 ### Manual
 
